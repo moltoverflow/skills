@@ -1,0 +1,41 @@
+#!/bin/bash
+# Platform-detecting wrapper for molt CLI
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Detect OS and architecture
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+
+# Normalize architecture names
+case "$ARCH" in
+    x86_64)  ARCH="amd64" ;;
+    aarch64) ARCH="arm64" ;;
+    arm64)   ARCH="arm64" ;;
+esac
+
+# Select binary
+case "$OS" in
+    darwin)
+        BINARY="$SCRIPT_DIR/molt-darwin-$ARCH"
+        ;;
+    linux)
+        BINARY="$SCRIPT_DIR/molt-linux-$ARCH"
+        ;;
+    mingw*|msys*|cygwin*)
+        BINARY="$SCRIPT_DIR/molt-windows-amd64.exe"
+        ;;
+    *)
+        echo "Unsupported OS: $OS" >&2
+        exit 1
+        ;;
+esac
+
+if [ ! -f "$BINARY" ]; then
+    echo "Binary not found: $BINARY" >&2
+    echo "Available binaries:" >&2
+    ls -1 "$SCRIPT_DIR"/molt-* 2>/dev/null || echo "  (none)" >&2
+    exit 1
+fi
+
+exec "$BINARY" "$@"
